@@ -105,11 +105,17 @@ class Maik {
 			curr_orientation = angle;
 		}
 		
-		// Calcular la drawCage
-		this.drawCage.x = curr_pos.x - 0.5 * base.width;
-		this.drawCage.y = curr_pos.y - 0.5 * base.height;
-		this.drawCage.w = base.width;
-		this.drawCage.h = base.height;
+		// Calcular la drawCage según el caso
+		var sprite_to_draw;
+		if(this.player){
+			sprite_to_draw = base;
+		}else{
+			sprite_to_draw = nega;
+		}
+		this.drawCage.x = curr_pos.x - 0.5 * sprite_to_draw.width;
+		this.drawCage.y = curr_pos.y - 0.5 * sprite_to_draw.height;
+		this.drawCage.w = sprite_to_draw.width;
+		this.drawCage.h = sprite_to_draw.height;
 					 
 		// Calcular la hitBox de la elipse
 		this.hitbox = hitbox(
@@ -128,8 +134,8 @@ class Maik {
 			// Calcular desfase y posición de las partículas
 			var vec_aux = normalize_vec(this.vel);
 			var des_pos = {
-				x: this.pos.x - vec_aux.x * base.width * 0.5,
-				y: this.pos.y - vec_aux.y * base.height * 0.5
+				x: this.pos.x - vec_aux.x * sprite_to_draw.width * 0.5,
+				y: this.pos.y - vec_aux.y * sprite_to_draw.height * 0.5
 			}
 			
 			// Calcular tamaño de las partículas
@@ -361,7 +367,6 @@ function gameLoop(){
 			value.pos.y + value.vel.y * mult
 		]);
 		*/
-		
 		// Dibujar drawcages
 		//request.push(['cage', value.drawCage.x, value.drawCage.y, value.drawCage.w, value.drawCage.h]);
 		
@@ -568,8 +573,9 @@ function hitbox(cx, cy, w, h){
 		
 		// Vértice del rectángulo inscrito de área máxima
 		const rx = ell_cx / Math.sqrt(2);
-		const ry = Math.sqrt(( Math.pow(w * h/ 2, 2) - Math.pow(h, 2) * Math.pow(rx, 2)) 
-			/ Math.pow(w, 2));
+		const ry = Math.sqrt(
+			( Math.pow(w * h/ 2, 2) - Math.pow(h, 2) * Math.pow(rx, 2)) / Math.pow(w, 2)
+		);
 		
 		// Ancho y alto del rectángulo inscrito de área máxima
 		const rw = w / Math.sqrt(2);
