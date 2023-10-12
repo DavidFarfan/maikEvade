@@ -7,16 +7,16 @@ body {
 	background-color:#272727;
 }
 
-h1 {
-	font-size:32px;
-	font-weight: normal;
-	margin:20px 0;
-	color:#fff;
-}
-
 #draw {
 	background-color: #fff;
 	margin-bottom:12px;
 	cursor: none;
 	width:100%;
+}
+
+.flex-container {
+  display: flex;
+  height: 500px;
+  align-items: center;
+  justify-content: center;
 }
