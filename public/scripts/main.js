@@ -153,7 +153,7 @@ class Maik {
 				y: ort.y * adj_size * prop,
 			}
 			
-			// Pedir particulas al animador
+			// Pedir particulas al animador, hay un límite de partículas en pantalla
 			if(particles.length < 256 || this.player){
 				add_particle([
 					des_pos.x,
@@ -242,7 +242,7 @@ canvas.addEventListener('mousemove', evt => {
 	mousePos = getMousePos(canvas, evt);
 }, false);
 
-// Capturar posición del mouse ante cualquier movimiento
+// Reiniciar el juego con un click
 canvas.addEventListener('click', () => {
 	location.reload();
 }, false);
@@ -448,6 +448,8 @@ function gameLoop(){
 // SPAWN DE UN ENEMIGO
 function spawn(){
 	const angle_spawn = Math.random() * 2 * Math.PI;
+	
+	// Hacerlo aparecer en una posición aleatoria a un radio fijo
 	entities.push(new Maik(false, {
 		x: Math.floor( .5 * canvas.width + canvas.width * Math.cos(angle_spawn) ), 
 		y: Math.floor( .5 * canvas.height + canvas.height * Math.sin(angle_spawn) ) 
@@ -592,6 +594,8 @@ function hitbox(cx, cy, w, h){
 
 // AGREGAR PARTÍCULA
 function add_particle(part, created){
+	
+	// Si la solicitud es de una partícula no creada aún, se acepta
 	if(!created){
 		add_particle({
 			req: ['circle', part[0], part[1], part[2]],
@@ -600,6 +604,8 @@ function add_particle(part, created){
 		}, true);
 		return;
 	}
+	
+	// La solicitud de una partícula vieja se acepta, siempre que no se haya diluido
 	if(part == null){
 		return;
 	}else{

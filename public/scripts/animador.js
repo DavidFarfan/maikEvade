@@ -113,64 +113,10 @@ function animate(){
 function solve(req, drawcages){
 	switch(req[0]){
 		case 'maik':
-		
-			// No dibujar aquello que está fuera de rango
-			if(req[4].x > ctx.canvas.width || 
-				req[4].y > ctx.canvas.height ||
-				req[4].x + req[4].w < 0 ||
-				req[4].y + req[4].h < 0){
-				return;
-			}
-			
-			// Comparar con la lista actual de drawCages
-			var i = 0;
-			for(; i<drawcages.length; i++){
-				const c1x = req[4].x + 0.5 * req[4].w;
-				const c1y = req[4].y + 0.5 * req[4].h;
-				const c2x = drawcages[i].x + 0.5 * drawcages[i].w;
-				const c2y = drawcages[i].y + 0.5 * drawcages[i].h;
-				
-				// Si la caja está oculta en cualquier otra, no dibujar
-				if(distance(c1x, c1y, c2x, c2y) <= 10){
-					return;
-				}
-			}
-			
-			// Si la caja no está oculta en ninguna otra, dibujar y agregar a la lista
-			if(i == drawcages.length){
-				paintRotation(maik_rot, req[1], req[2], req[3]);
-				drawcages.push(req[4]);
-			}
+			maik(req, drawcages, true);
 			break;
 		case 'nega':
-			
-			// No dibujar aquello que está fuera de rango
-			if(req[4].x > ctx.canvas.width || 
-				req[4].y > ctx.canvas.height ||
-				req[4].x + req[4].w < 0 ||
-				req[4].y + req[4].h < 0){
-				return;
-			}
-			
-			// Comparar con la lista actual de drawCages
-			var i = 0;
-			for(; i<drawcages.length; i++){
-				const c1x = req[4].x + 0.5 * req[4].w;
-				const c1y = req[4].y + 0.5 * req[4].h;
-				const c2x = drawcages[i].x + 0.5 * drawcages[i].w;
-				const c2y = drawcages[i].y + 0.5 * drawcages[i].h;
-				
-				// Si la caja está oculta en cualquier otra, no dibujar
-				if(distance(c1x, c1y, c2x, c2y) <= 10){
-					return;
-				}
-			}
-			
-			// Si la caja no está oculta en ninguna otra, dibujar y agregar a la lista
-			if(i == drawcages.length){
-				paintRotation(nega_rot, req[1], req[2], req[3]);
-				drawcages.push(req[4]);
-			}
+			maik(req, drawcages, false);
 			break;
 		case 'line':
 			linea(req[1], req[2], req[3], req[4]);
@@ -189,6 +135,44 @@ function solve(req, drawcages){
 			break;
 	}
 	return;
+}
+
+// RESOLVER PETICIÓN DE UN JUGADOR/ENEMIGO
+function maik(req, drawcages, player){
+	
+	// No dibujar aquello que está fuera de rango
+	if(req[4].x > ctx.canvas.width || 
+		req[4].y > ctx.canvas.height ||
+		req[4].x + req[4].w < 0 ||
+		req[4].y + req[4].h < 0){
+		return;
+	}
+	
+	// Comparar con la lista actual de drawCages
+	var i = 0;
+	for(; i<drawcages.length; i++){
+		const c1x = req[4].x + 0.5 * req[4].w;
+		const c1y = req[4].y + 0.5 * req[4].h;
+		const c2x = drawcages[i].x + 0.5 * drawcages[i].w;
+		const c2y = drawcages[i].y + 0.5 * drawcages[i].h;
+		
+		// Si la caja está oculta en cualquier otra, no dibujar
+		if(distance(c1x, c1y, c2x, c2y) <= 10){
+			return;
+		}
+	}
+	
+	// Si la caja no está oculta en ninguna otra, dibujar y agregar a la lista
+	if(i == drawcages.length){
+		
+		// Discernir entre jugador/enemigo
+		if(player){
+			paintRotation(maik_rot, req[1], req[2], req[3]);
+		}else{
+			paintRotation(nega_rot, req[1], req[2], req[3]);
+		}
+		drawcages.push(req[4]);
+	}
 }
 
 // BORRAR TODO EL LIENZO
