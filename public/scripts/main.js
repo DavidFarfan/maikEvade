@@ -119,7 +119,7 @@ class Maik {
 		this.drawCage.w = sprite_to_draw.width;
 		this.drawCage.h = sprite_to_draw.height;
 					 
-		// Calcular la hitBox de la elipse
+		// Calcular la hitBox
 		this.hitbox = hitbox(
 			this.drawCage.x, 
 			this.drawCage.y, 
@@ -387,10 +387,10 @@ function gameLoop(){
 		
 		// Dibujar hitboxes
 		//request.push(['hitbox', value.hitbox.x, value.hitbox.y, value.hitbox.w, value.hitbox.h]);
-		
-		// Escribir número de Negas
-		request.push(['debug', enemy_counter, canvas.width - 30, canvas.height - 30]);
 	});
+	
+	// Escribir número de Negas
+	request.push(['debug', enemy_counter, canvas.width - 30, canvas.height - 30]);
 	
 	// Game Over
 	if(!Maik.playable){
