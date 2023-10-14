@@ -127,7 +127,12 @@ function solve(req, drawcages){
 		case 'debug':
 			debug(req[1], req[2], req[3]);
 			break;
-		case 'cage':
+		case 'drawcage':
+			ctx.fillStyle = 'green';
+			ctx.fillRect(req[1], req[2], req[3], req[4]);
+			break;
+		case 'hitbox':
+			ctx.fillStyle = 'red';
 			ctx.fillRect(req[1], req[2], req[3], req[4]);
 			break;
 		case 'over': 

@@ -19,8 +19,8 @@ class Maik {
 		// Posición
 		if(pos == null){
 			this.pos = {
-				x: 200,
-				y: 200
+				x: .5 * canvas.width,
+				y: .5 * canvas.height
 			};
 		}else{
 			this.pos = pos;
@@ -36,7 +36,7 @@ class Maik {
 		this.drawCage = {x:0, y:0, w:0, h:0};
 		
 		// Hitbox
-		this.hitbox = {x:0, y:0, w:0, h:0};
+		this.hitbox = null;
 	}
 	
 	// Acción del Maik
@@ -105,13 +105,15 @@ class Maik {
 			curr_orientation = angle;
 		}
 		
-		// Calcular la drawCage según el caso
+		// Realizar los próximos cálculos con base en la imagen que corresponde
 		var sprite_to_draw;
 		if(this.player){
 			sprite_to_draw = base;
 		}else{
 			sprite_to_draw = nega;
 		}
+		
+		// Calcular la drawCage según el caso
 		this.drawCage.x = curr_pos.x - 0.5 * sprite_to_draw.width;
 		this.drawCage.y = curr_pos.y - 0.5 * sprite_to_draw.height;
 		this.drawCage.w = sprite_to_draw.width;
@@ -122,11 +124,13 @@ class Maik {
 			this.drawCage.x, 
 			this.drawCage.y, 
 			this.drawCage.w, 
-			this.drawCage.h
+			this.drawCage.h,
+			this.hitbox,
+			this.vel
 		);
 		
 		// Pintar las partículas, si hubo movimiento
-		if(this.pos.x != curr_pos.x || this.pos.y != curr_pos.y){
+		if(this.vel.x != 0 || this.vel.y != 0){
 			
 			// Vector ortonormal a la velocidad previa (centrado en el origen)
 			var ort = vec_ort(this.vel);
@@ -174,10 +178,7 @@ class Maik {
 		
 		// Acción de Nega al final del juego
 		if(!Maik.playable){
-			
-			// Heurística para separarse
-			const rotation = Math.floor(Math.random() * 2 * Math.PI);
-			curr_vel = rot_vec(this.vel, rotation);
+			curr_vel = this.separe();
 		}
 		
 		// Pasar los parámetros al paso futuro
@@ -189,10 +190,9 @@ class Maik {
 	// Interacción
 	interaction(primary){
 		
-		// Heurística para separarse (sólo lo hace uno de los dos)
+		// Separarse (sólo lo hace uno de los dos)
 		if(primary){
-			const rotation = Math.floor(Math.random() * 2 * Math.PI);
-			this.vel = rot_vec(this.vel, rotation);
+			this.vel = this.separe();
 		}
 		
 		// Muerte del jugador
@@ -219,15 +219,17 @@ class Maik {
 			Maik.playable = false;
 		}
 	}
+	
+	// Heurística para separarse
+	separe(){
+		
+		// Velocidad aleatoria
+		const rotation = Math.floor(Math.random() * 2 * Math.PI);
+		return rot_vec(this.vel, rotation);
+	}
 }
 
 //--------- HILO PRINCIPAL ------------
-
-// Posicion del mouse
-var mousePos = {
-	x: 0,
-	y: 0
-};
 
 // Se corre una instancia de Worker (hilo) con el código animador
 const animator = new Worker("/scripts/animador.js");
@@ -236,6 +238,12 @@ const animator = new Worker("/scripts/animador.js");
 // para eso, se lo tiene que enviar a través de un mensaje con un objeto Offscreen conteniéndolo.
 const canvas = document.getElementById('draw');
 const main_offscreen = canvas.transferControlToOffscreen();
+
+// Posicion del mouse
+var mousePos = {
+	x: .5 * canvas.width,
+	y: .5 * canvas.height
+};
 
 // Capturar posición del mouse ante cualquier movimiento
 canvas.addEventListener('mousemove', evt => {
@@ -368,7 +376,7 @@ function gameLoop(){
 		]);
 		*/
 		// Dibujar drawcages
-		//request.push(['cage', value.drawCage.x, value.drawCage.y, value.drawCage.w, value.drawCage.h]);
+		//request.push(['drawcage', value.drawCage.x, value.drawCage.y, value.drawCage.w, value.drawCage.h]);
 		
 		// Dibujar sprites rotados
 		if(value.player){
@@ -378,7 +386,7 @@ function gameLoop(){
 		}
 		
 		// Dibujar hitboxes
-		//request.push(['cage', value.hitbox.x, value.hitbox.y, value.hitbox.w, value.hitbox.h]);
+		//request.push(['hitbox', value.hitbox.x, value.hitbox.y, value.hitbox.w, value.hitbox.h]);
 		
 		// Escribir número de Negas
 		request.push(['debug', enemy_counter, canvas.width - 30, canvas.height - 30]);
@@ -566,30 +574,43 @@ function vec_ort(v){
 	return normalize_vec(vec_aux);
 }
 
-// RECTÁNGULO DE ÁREA MÁXIMA INSCRITO EN LA ELIPSE INSCRITA EN UN RECTÁNGULO
-function hitbox(cx, cy, w, h){
+// COLISIÓN (El rectángulo de área máxima inscrito en la elipse inscrita en la drawcage)
+function hitbox(cx, cy, w, h, hitbox, vel){
 		
-		// Centro y radio de la elipse
-		const ell_cx = Math.abs(.5 * w);
-		const ell_cy = Math.abs(.5 * h);
+		// Calcular la hitbox cuando no está creada
+		if(hitbox == null){
+			
+			// Centro y radio de la elipse
+			const ell_cx = Math.abs(.5 * w);
+			const ell_cy = Math.abs(.5 * h);
+			
+			// Vértice del rectángulo inscrito de área máxima
+			const rx = ell_cx / Math.sqrt(2);
+			const ry = Math.sqrt(
+				( Math.pow(w * h/ 2, 2) - Math.pow(h, 2) * Math.pow(rx, 2)) / Math.pow(w, 2)
+			);
+			
+			// Ancho y alto del rectángulo inscrito de área máxima
+			const rw = w / Math.sqrt(2);
+			const rh = 2 * ry;
+			
+			// Devolver rectángulo según el centro recibido
+			return {
+				x: cx + ell_cx - rx,
+				y: cy + ell_cy - ry,
+				w: rw,
+				h: rh
+			};
 		
-		// Vértice del rectángulo inscrito de área máxima
-		const rx = ell_cx / Math.sqrt(2);
-		const ry = Math.sqrt(
-			( Math.pow(w * h/ 2, 2) - Math.pow(h, 2) * Math.pow(rx, 2)) / Math.pow(w, 2)
-		);
-		
-		// Ancho y alto del rectángulo inscrito de área máxima
-		const rw = w / Math.sqrt(2);
-		const rh = 2 * ry;
-		
-		// Devolver rectángulo según el centro recibido
-		return {
-			x: cx + ell_cx - rx,
-			y: cy + ell_cy - ry,
-			w: rw,
-			h: rh
-		};
+		// Desplazar hitbox cuando ya existe
+		}else{
+			return {
+				x: hitbox.x + vel.x,
+				y: hitbox.y + vel.y,
+				w: hitbox.w,
+				h: hitbox.h
+			};
+		}
 }
 
 // AGREGAR PARTÍCULA
