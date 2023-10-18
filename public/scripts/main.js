@@ -2,6 +2,7 @@
 class Maik {
 	
 	static playable = false;
+	static win = false;
 	
 	constructor(player, pos){
 		
@@ -45,6 +46,31 @@ class Maik {
 		// Actuar si se está vivo
 		if(!this.alive){
 			return;
+		}
+		
+		// Muerte de los enemigos
+		if(!this.player && (enemy_counter >= 100 || Maik.win)){
+			
+			// Dejar partículas residuales
+			for(var i=0; i<8; i++){
+				const angle_ded_parts = (2 * Math.PI) * (i / 8);
+				const vel_ded_parts = {
+					x: Math.cos(angle_ded_parts),
+					y: Math.sin(angle_ded_parts)
+				};
+				add_particle([
+					this.pos.x,
+					this.pos.y,
+					10,
+					50 * vel_ded_parts.x,
+					50 * vel_ded_parts.y
+				]);
+			}
+			
+			// Detener la persecusíon
+			this.alive = false;
+			enemy_counter--;
+			Maik.win = true;
 		}
 		
 		// Calcular posición actual
@@ -381,6 +407,31 @@ function gameLoop(){
 		// Dibujar sprites rotados
 		if(value.player){
 			request.push(['maik', value.orientation, value.pos.x, value.pos.y, value.drawCage]);
+			
+			/*
+			// Debug drawCage del jugador
+			request.push([
+				'debug', 
+				value.drawCage.x.toString() + " " + 
+					value.drawCage.y.toString() + " " +
+					value.drawCage.w.toString() + " " +
+					value.drawCage.h.toString(),
+				100, 
+				90
+			]);
+			
+			// Debug hitbox del jugador
+			request.push([
+				'debug', 
+				value.hitbox.x.toString() + " " + 
+					value.hitbox.y.toString() + " " +
+					value.hitbox.w.toString() + " " +
+					value.hitbox.h.toString(),
+				100, 
+				100
+			]);
+			*/
+			
 		}else{
 			request.push(['nega', value.orientation, value.pos.x, value.pos.y, value.drawCage]);
 		}
@@ -395,6 +446,10 @@ function gameLoop(){
 	// Game Over
 	if(!Maik.playable){
 		request.push(['over']);
+	
+	// Win
+	}else if(Maik.win){
+		request.push(['win']);
 	}
 	
 	// Enviar petición al animador
@@ -576,6 +631,11 @@ function vec_ort(v){
 
 // COLISIÓN (El rectángulo de área máxima inscrito en la elipse inscrita en la drawcage)
 function hitbox(cx, cy, w, h, hitbox, vel){
+		
+		// No calcular hitbox si la drawCage que llega tiene área cero
+		if(w * h == 0){
+			return;
+		}
 		
 		// Calcular la hitbox cuando no está creada
 		if(hitbox == null){

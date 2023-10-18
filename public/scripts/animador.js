@@ -138,6 +138,9 @@ function solve(req, drawcages){
 		case 'over': 
 			game_over();
 			break;
+		case 'win': 
+			win();
+			break;
 	}
 	return;
 }
@@ -217,6 +220,16 @@ function game_over(){
 	ctx.fillText('GAME OVER', .5 * ctx.canvas.width, .5 * ctx.canvas.height);
 	ctx.font = "20px tahoma";
 	ctx.fillText('<Click> to retry.', .5 * ctx.canvas.width, .55 * ctx.canvas.height);
+}
+
+// WIN
+function win(){
+	ctx.font = "bold 50px tahoma";
+	ctx.fillStyle = '#111144';
+	ctx.textAlign = "center";
+	ctx.fillText('YOU WIN!', .5 * ctx.canvas.width, .5 * ctx.canvas.height);
+	ctx.font = "20px tahoma";
+	ctx.fillText('100 Enemies evaded! <Click> to retry.', .5 * ctx.canvas.width, .55 * ctx.canvas.height);
 }
 
 // DEBUG TEXTO
