@@ -66,7 +66,7 @@ self.onmessage = function(e) {
 
 // FRAME DE ANIMACIÓN
 function animate(){
-	
+		
 	// Verificar que se hayan recibido los recursos gráficos
 	if(maik_img == null || nega_img == null){
 		requestAnimationFrame(animate);
@@ -83,6 +83,7 @@ function animate(){
 	if(nega_rot == null){
 		nega_rot = paintRotationSheet(nega_img, 12);
 		//console.log('> Hoja de rotaciones: Nega.');
+		erase();
 		requestAnimationFrame(animate);
 		return;
 	}
@@ -124,6 +125,9 @@ function solve(req, drawcages){
 		case 'circle':
 			circulo(req[1], req[2], req[3]);
 			break;
+		case 'ellipse':
+			elipse(req[1], req[2], req[3], req[4]);
+			break;
 		case 'debug':
 			debug(req[1], req[2], req[3]);
 			break;
@@ -158,14 +162,18 @@ function maik(req, drawcages, player){
 	
 	// Comparar con la lista actual de drawCages
 	var i = 0;
+	var drawcage_diag = 0;
 	for(; i<drawcages.length; i++){
 		const c1x = req[4].x + 0.5 * req[4].w;
 		const c1y = req[4].y + 0.5 * req[4].h;
 		const c2x = drawcages[i].x + 0.5 * drawcages[i].w;
 		const c2y = drawcages[i].y + 0.5 * drawcages[i].h;
 		
+		// Comparar distancia de los centros con el 30% del radio del objeto al que colisiona
+		drawcage_diag = hipo(drawcages[i].w * .5, drawcages[i].h * .5) * .3;
+		
 		// Si la caja está oculta en cualquier otra, no dibujar
-		if(distance(c1x, c1y, c2x, c2y) <= 10){
+		if(distance(c1x, c1y, c2x, c2y) <= drawcage_diag){
 			return;
 		}
 	}
@@ -210,6 +218,14 @@ function circulo(cx, cy, r){
 		2 * Math.PI
 	);
 	ctx.fill();
+}
+
+// TRAZAR UNA ELIPSE
+function elipse(cx, cy, b, a){
+	ctx.strokeStyle = '#0000FF';
+	ctx.beginPath();
+	ctx.ellipse(cx, cy, b, a, 0, 0, 2 * Math.PI, false);
+	ctx.stroke();
 }
 
 // GAME OVER
@@ -417,4 +433,9 @@ function paintRotationSheet(img, steps){
 // DISTANCIA ENTRE DOS PUNTOS
 function distance(x1, y1, x2, y2){
 	return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
+}
+
+// HIPOTENUSA
+function hipo(o, a){
+	return distance(0, 0, o, a);
 }
