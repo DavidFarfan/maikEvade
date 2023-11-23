@@ -1,6 +1,12 @@
 // Contexto del canvas
 var ctx = null;
 
+// Cámara
+var cam = {
+	x: 0,
+	y: 0
+};
+
 // Imagenes
 var maik_img = null;
 var nega_img = null;
@@ -131,30 +137,66 @@ function solve(req, drawcages){
 			direction(req[1]);
 			break;
 		case 'maik':
-			maik(req, drawcages, true);
+			maik(
+				req,
+				drawcages,
+				true
+			);
 			break;
 		case 'nega':
-			maik(req, drawcages, false);
+			maik(
+				req,
+				drawcages,
+				false
+			);
 			break;
 		case 'line':
-			linea(req[1], req[2], req[3], req[4]);
+			linea(
+				req[1] - cam.x,
+				req[2] - cam.y,
+				req[3] - cam.x,
+				req[4] - cam.y
+			);
 			break;
 		case 'circle':
-			circulo(req[1], req[2], req[3]);
+			circulo(
+				req[1] - cam.x,
+				req[2] - cam.y,
+				req[3]
+			);
 			break;
 		case 'ellipse':
-			elipse(req[1], req[2], req[3], req[4]);
+			elipse(
+				req[1] - cam.x,
+				req[2] - cam.y,
+				req[3],
+				req[4]
+			);
 			break;
 		case 'debug':
-			debug(req[1], req[2], req[3]);
+			debug(
+				req[1],
+				req[2],
+				req[3]
+			);
 			break;
 		case 'drawcage':
 			ctx.fillStyle = 'green';
-			ctx.fillRect(req[1], req[2], req[3], req[4]);
+			ctx.fillRect(
+				req[1] - cam.x,
+				req[2] - cam.y,
+				req[3] - cam.x,
+				req[4] - cam.y
+			);
 			break;
 		case 'hitbox':
 			ctx.fillStyle = 'red';
-			ctx.fillRect(req[1], req[2], req[3], req[4]);
+			ctx.fillRect(
+				req[1] - cam.x,
+				req[2] - cam.y,
+				req[3] - cam.x,
+				req[4] - cam.y
+			);
 			break;
 		case 'over': 
 			game_over();
@@ -186,14 +228,6 @@ function direction(code){
 // RESOLVER PETICIÓN DE UN JUGADOR/ENEMIGO
 function maik(req, drawcages, player){
 	
-	// No dibujar aquello que está fuera de rango
-	if(req[4].x > ctx.canvas.width || 
-		req[4].y > ctx.canvas.height ||
-		req[4].x + req[4].w < 0 ||
-		req[4].y + req[4].h < 0){
-		return;
-	}
-	
 	// Comparar con la lista actual de drawCages
 	var i = 0;
 	var drawcage_diag = 0;
@@ -217,6 +251,10 @@ function maik(req, drawcages, player){
 		
 		// Discernir entre jugador/enemigo
 		if(player){
+			cam = {
+				x: req[2] - ctx.canvas.width * .5,
+				y: req[3] - ctx.canvas.height * .5
+			};
 			paintRotation(maik_rot, req[1], req[2], req[3]);
 		}else{
 			paintRotation(nega_rot, req[1], req[2], req[3]);
@@ -295,34 +333,12 @@ function paintRotation(cuts, angle, x, y){
 	// Calcular el recorte a mostrar
 	const step = Math.floor( ( angle / (2 * Math.PI) ) * cuts.length );
 	
-	/*
-	// Mostrar dimensiones del recorte
-	ctx.fillStyle = '#000000';
-	ctx.fillRect(
-		Math.floor(x - .5 * cuts[step].width),
-		Math.floor(y - .5 * cuts[step].height),
-		cuts[step].width,
-		cuts[step].height
-	);
-	*/
-	
 	// Dibujar recorte en el canvas principal
 	ctx.drawImage(
 		cuts[step],
-		Math.floor(x - .5 * cuts[step].width),
-		Math.floor(y - .5 * cuts[step].height)
+		Math.floor(x - .5 * cuts[step].width) - cam.x,
+		Math.floor(y - .5 * cuts[step].height) - cam.y
 	);
-	
-	/*
-	// Mostrar centro
-	ctx.fillStyle = '#FF0000';
-	ctx.fillRect(
-		x,
-		y,
-		2,
-		2
-	);
-	*/
 }
 
 // CALCULAR HOJA DE ROTACIONES
@@ -351,18 +367,6 @@ function paintRotationSheet(img, steps){
 	for(var i=0; i<dim_x; i++){
 		for(var j=0; j<dim_y; j++){
 			
-			/*
-			// Cuadrícula
-			sheet_ctx.beginPath();
-			sheet_ctx.rect(
-				Math.floor(i * diag), 
-				Math.floor(j * diag), 
-				Math.floor(diag), 
-				Math.floor(diag)
-			);
-			sheet_ctx.stroke();
-			*/
-			
 			// Calcular ángulo de rotación
 			const radians = (2 * Math.PI / 360) * (dim_y * i + j) * step;
 			
@@ -373,18 +377,6 @@ function paintRotationSheet(img, steps){
 				Math.floor((j + .5) * diag)
 			);
 			sheet_ctx.rotate(radians);
-			
-			/*
-			// Mostrar transformación del canvas
-			sheet_ctx.beginPath();
-			sheet_ctx.rect(
-				0, 
-				0, 
-				img.width, 
-				img.height
-			);
-			sheet_ctx.stroke();
-			*/
 			
 			// Corregir posición de los centros
 			sheet_ctx.translate(
@@ -399,26 +391,10 @@ function paintRotationSheet(img, steps){
 				0
 			);
 			
-			// Debug
-			//sheet_ctx.fillText(radians.toString(), 0, 0);
-			
 			// Olvidar última referencia
 			sheet_ctx.restore();
 		}
 	}
-	
-	/*
-	// Dibujar bordes de la hoja
-	sheet_ctx.strokeStyle = '#FF0000';
-	sheet_ctx.beginPath();
-	sheet_ctx.rect(
-		0, 
-		0, 
-		Math.floor(dim_x * diag), 
-		Math.floor(dim_y * diag)
-	);
-	sheet_ctx.stroke();
-	*/
 	
 	// Recortar el sheet
 	var cuts = [];
@@ -445,15 +421,6 @@ function paintRotationSheet(img, steps){
 		
 		// Acumular recortes
 		createImageBitmap(aux_canvas.canvas).then(resolve => {
-		
-			/*
-			// Dibujar las rotaciones en el canvas principal
-			ctx.drawImage(
-				resolve,
-				0,
-				0
-			);
-			*/
 		
 			// Almacenarlos en formato ImageBitmap
 			cuts.push(resolve);

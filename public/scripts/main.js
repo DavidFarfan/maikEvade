@@ -3,6 +3,10 @@ class Maik {
 	
 	static playable = false;
 	static win = false;
+	static playerPos = {
+		x: 0,
+		y: 0
+	};
 	
 	constructor(player, pos){
 		
@@ -74,36 +78,83 @@ class Maik {
 		}
 		
 		// Calcular posición actual
-		var curr_pos;
-		if(this.player){
-			curr_pos = {
-				x: mousePos.x,
-				y: mousePos.y
-			};
-		}else{
-			curr_pos = {
-				x: this.pos.x + this.vel.x,
-				y: this.pos.y + this.vel.y
-			};
-		}
+		var curr_pos = {
+			x: this.pos.x + this.vel.x,
+			y: this.pos.y + this.vel.y
+		};
 		
 		// Cálculo de la velocidad
-		var curr_vel;
+		var curr_vel = { x: 0, y: 0 };
 		if(this.player){
 			
-			// Calcular la velocidad previa del jugador, hacer retrospectiva.
-			this.vel = {
-				x: curr_pos.x - this.pos.x,
-				y: curr_pos.y - this.pos.y
+			// Magnitud
+			const vel_mag = 5;
+			
+			// Dirección
+			var vel_dir;
+			switch(joystickPos){
+				case 1:
+					vel_dir = normalize_vec({
+						x: -1,
+						y: 1
+					});
+					break;
+				case 2:
+					vel_dir = normalize_vec({
+						x: 0,
+						y: 1
+					});
+					break;
+				case 3:
+					vel_dir = normalize_vec({
+						x: 1,
+						y: 1
+					});
+					break;
+				case 4:
+					vel_dir = normalize_vec({
+						x: -1,
+						y: 0
+					});
+					break;
+				case 5:
+					vel_dir = normalize_vec({
+						x: 0,
+						y: 0
+					});
+					break;
+				case 6:
+					vel_dir = normalize_vec({
+						x: 1,
+						y: 0
+					});
+					break;
+				case 7:
+					vel_dir = normalize_vec({
+						x: -1,
+						y: -1
+					});
+					break;
+				case 8:
+					vel_dir = normalize_vec({
+						x: 0,
+						y: -1
+					});
+					break;
+				case 9:
+					vel_dir = normalize_vec({
+						x: 1,
+						y: -1
+					});
+					break;
 			};
 			
-			// Anular velocidad actual del jugador, es desconocida.
+			// Vector
 			curr_vel = {
-				x: 0,
-				y: 0
+				x: vel_mag * vel_dir.x,
+				y: vel_mag * vel_dir.y
 			};
-		
-		// Calcular la velocidad actual para la PC
+			
 		}else{
 			
 			// Magnitud
@@ -111,8 +162,8 @@ class Maik {
 			
 			// Dirección
 			var vel_dir = normalize_vec({
-				x: mousePos.x - curr_pos.x,
-				y: mousePos.y - curr_pos.y
+				x: Maik.playerPos.x - curr_pos.x,
+				y: Maik.playerPos.y - curr_pos.y
 			});
 			
 			// Vector
@@ -120,7 +171,7 @@ class Maik {
 				x: vel_mag * vel_dir.x,
 				y: vel_mag * vel_dir.y
 			}
-		}
+		};
 		
 		// Calcular la orientación actual (en radianes)
 		var curr_orientation;
@@ -209,6 +260,9 @@ class Maik {
 		
 		// Pasar los parámetros al paso futuro
 		this.pos = curr_pos;
+		if(this.player){
+			Maik.playerPos = curr_pos;
+		};
 		this.vel = curr_vel;
 		this.orientation = curr_orientation;
 	}
@@ -265,6 +319,7 @@ const LEFT = 'KeyH';
 
 // Teclas presionadas
 var pressedPool = {};
+var joystickPos = 5;
 
 // Se corre una instancia de Worker (hilo) con el código animador
 const animator = new Worker("/scripts/animador.js");
@@ -272,12 +327,6 @@ const animator = new Worker("/scripts/animador.js");
 // El canvas puede transferir al Worker el control de su contexto.
 // para eso, se lo tiene que enviar a través de un mensaje con un objeto Offscreen conteniéndolo.
 const canvas = document.getElementById('draw');
-
-// Posicion del mouse
-var mousePos = {
-	x: .5 * canvas.width,
-	y: .5 * canvas.height
-};
 
 // Capturar presión de tecla
 window.addEventListener('keydown', (evt) => {
@@ -287,11 +336,6 @@ window.addEventListener('keydown', (evt) => {
 // Capturar alivio de tecla
 window.addEventListener('keyup', (evt) => {
 	pressed_pool(evt.code, false);
-}, false);
-
-// Capturar posición del mouse
-canvas.addEventListener('mousemove', (evt) => {
-	mousePos = getMousePos(canvas, evt);
 }, false);
 
 // Reiniciar el juego con un click
@@ -386,6 +430,9 @@ setInterval(gameLoop, 16.6);
 //--------- LOOP DE JUEGO ------------
 function gameLoop(){
 	
+	// Calcular input
+	joystickPos = pressed_direction();
+	
 	// Poner en marcha individuos
 	entities.forEach(function(value, index, array){
 		value.act();
@@ -426,47 +473,12 @@ function gameLoop(){
 	// Agregar items de entidades
 	entities.forEach(function(value, index, array){
 		
-		/*
-		// Trazar la velocidad previa
-		const mult = 20;
-		request.push([
-			'line', 
-			value.pos.x,
-			value.pos.y,
-			value.pos.x + value.vel.x * mult,
-			value.pos.y + value.vel.y * mult
-		]);
-		*/
 		// Dibujar drawcages
 		//request.push(['drawcage', value.drawCage.x, value.drawCage.y, value.drawCage.w, value.drawCage.h]);
 		
 		// Dibujar sprites rotados
 		if(value.player){
 			request.push(['maik', value.orientation, value.pos.x, value.pos.y, value.drawCage]);
-			
-			/*
-			// Debug drawCage del jugador
-			request.push([
-				'debug', 
-				value.drawCage.x.toString() + " " + 
-					value.drawCage.y.toString() + " " +
-					value.drawCage.w.toString() + " " +
-					value.drawCage.h.toString(),
-				100, 
-				90
-			]);
-			
-			// Debug hitbox del jugador
-			request.push([
-				'debug', 
-				value.hitbox.x.toString() + " " + 
-					value.hitbox.y.toString() + " " +
-					value.hitbox.w.toString() + " " +
-					value.hitbox.h.toString(),
-				100, 
-				100
-			]);
-			*/
 			
 		}else{
 			request.push(['nega', value.orientation, value.pos.x, value.pos.y, value.drawCage]);
@@ -489,7 +501,7 @@ function gameLoop(){
 	}
 	
 	// Joystick
-	request.push(['joystick', pressed_direction()]);
+	request.push(['joystick', joystickPos]);
 	
 	// Enviar petición al animador
 	animator.postMessage({ type: 'request', req: request});
@@ -516,39 +528,7 @@ function gameLoop(){
 	
 	// Calcular hold de las teclas
 	pressed_hold();
-	
-	/*
-	// Imprimir llamadas por segundo
-	time = Date.now().toString();
-	sec_time = time.substr(-4);
-	second = sec_time.charAt(0);
-	if(second == pre){
-		sum += 1;
-	}else{
-		console.log('second: ' + time + ' CPS: ' + sum.toString());
-		sum = 1;
-		pre = second;
-	}
-	
-	// Enviar pedido de prueba al animador
-	animator.postMessage({ type: 'request', req: [
-		['circle', 
-			.5 * canvas.width, 
-			.5 * canvas.height, 
-			.5 * distance(mousePos.x, mousePos.y, mousePos.y, mousePos.x)
-		],
-		['cage', mousePos.x, mousePos.y, base.width, base.height],
-		['maik', Math.PI, mousePos.x, mousePos.y],
-		['nega', 0, mousePos.y, mousePos.x],
-		['line', mousePos.x, mousePos.y, mousePos.y, mousePos.x],
-		['debug', 
-			'[' + mousePos.x.toString() + ', ' + mousePos.y.toString() + ']', 
-			400, 
-			400
-		]
-	]});
-	*/
-}
+};
 
 // SPAWN DE UN ENEMIGO
 function spawn(){
@@ -561,7 +541,7 @@ function spawn(){
 	}));
 	enemy_counter ++;
 	return;
-}
+};
 
 // VERIFICAR COLISIÓN
 function box_collide(b1, b2){
@@ -575,8 +555,8 @@ function box_collide(b1, b2){
 		return false;
 	}else{
 		return true;
-	}
-}
+	};
+};
 
 // COLISIÓN (El rectángulo de área máxima inscrito en la elipse inscrita en la drawcage)
 function hitbox(cx, cy, w, h, hitbox, vel){
@@ -619,8 +599,8 @@ function hitbox(cx, cy, w, h, hitbox, vel){
 				w: hitbox.w,
 				h: hitbox.h
 			};
-		}
-}
+		};
+};
 
 // AGREGAR PARTÍCULA
 function add_particle(part, created){
@@ -633,15 +613,15 @@ function add_particle(part, created){
 			v_y: part[4],
 		}, true);
 		return;
-	}
+	};
 	
 	// La solicitud de una partícula vieja se acepta, siempre que no se haya diluido
 	if(part == null){
 		return;
 	}else{
 		particles.push(part);
-	}
-}
+	};
+};
 
 // CALCULAR MOVIMIENTO DE UNA PARTÍCULA
 function move_particle(part){
@@ -657,12 +637,12 @@ function move_particle(part){
 	// Terminar recursión al agotar opacidad
 	if(o < 0){
 		return null;
-	}
+	};
 	
 	// Empezar con opacidad 100%
 	if(o == null){
 		o = 1;
-	}
+	};
 	
 	// Pedir una particula con nuevo centro y opacidad
 	return {
@@ -671,20 +651,6 @@ function move_particle(part){
 		v_y: vy,
 		op: o - .34
 	};
-}
-
-// CAPTURA DE POSICIÓN DEL MOUSE
-function getMousePos(canvas, evt){
-    var rect = canvas.getBoundingClientRect();
-	var root = document.documentElement;
-	
-	// Posición relativa del mouse
-    var mouseX = evt.clientX - rect.left - root.scrollLeft;
-    var mouseY = evt.clientY - rect.top - root.scrollTop;
-    return {
-      x: mouseX,
-      y: mouseY
-    };
 };
 
 // CALCULAR TECLA DOMINANTE DE UNA DICOTOMÍA
