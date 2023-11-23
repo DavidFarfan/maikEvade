@@ -479,23 +479,6 @@ function gameLoop(){
 	// Escribir número de Negas
 	request.push(['debug', enemy_counter, canvas.width - 50, canvas.height - 30]);
 	
-	// Debug: teclas
-	request.push([
-			'debug',
-			pressed_direction(),
-			canvas.width - 50,
-			canvas.height - 40
-		]);
-	let keys = Object.keys(pressedPool);
-	for(var i=0; i<keys.length; i++){
-		request.push([
-			'debug',
-			keys[i] + ': ' + pressedPool[keys[i]],
-			canvas.width - 50,
-			canvas.height - 50 - (i * 10)
-		]);
-	};
-	
 	// Game Over
 	if(!Maik.playable){
 		request.push(['over']);
