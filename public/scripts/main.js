@@ -257,13 +257,21 @@ class Maik {
 
 //--------- HILO PRINCIPAL ------------
 
+// Teclas direccionales
+const UP = 'KeyW';
+const DOWN = 'KeyS';
+const RIGHT = 'KeyD';
+const LEFT = 'KeyA';
+
+// Teclas presionadas
+var pressedPool = {};
+
 // Se corre una instancia de Worker (hilo) con el código animador
 const animator = new Worker("/scripts/animador.js");
 
 // El canvas puede transferir al Worker el control de su contexto.
 // para eso, se lo tiene que enviar a través de un mensaje con un objeto Offscreen conteniéndolo.
 const canvas = document.getElementById('draw');
-const main_offscreen = canvas.transferControlToOffscreen();
 
 // Posicion del mouse
 var mousePos = {
@@ -271,8 +279,18 @@ var mousePos = {
 	y: .5 * canvas.height
 };
 
-// Capturar posición del mouse ante cualquier movimiento
-canvas.addEventListener('mousemove', evt => {
+// Capturar presión de tecla
+window.addEventListener('keydown', (evt) => {
+	pressed_pool(evt.code, true);
+}, false);
+
+// Capturar alivio de tecla
+window.addEventListener('keyup', (evt) => {
+	pressed_pool(evt.code, false);
+}, false);
+
+// Capturar posición del mouse
+canvas.addEventListener('mousemove', (evt) => {
 	mousePos = getMousePos(canvas, evt);
 }, false);
 
@@ -281,9 +299,10 @@ canvas.addEventListener('click', () => {
 	location.reload();
 }, false);
 
+const main_offscreen = canvas.transferControlToOffscreen();
+
 // Enviar al animador el contexto
 animator.postMessage({ type: 'context', canvas: main_offscreen }, [main_offscreen]);
-//console.log('> Contexto enviado al animador.');
 
 // Leer sprite de Maik
 const base = new Image();
@@ -441,7 +460,24 @@ function gameLoop(){
 	});
 	
 	// Escribir número de Negas
-	request.push(['debug', enemy_counter, canvas.width - 30, canvas.height - 30]);
+	request.push(['debug', enemy_counter, canvas.width - 50, canvas.height - 30]);
+	
+	// Debug: teclas
+	request.push([
+			'debug',
+			pressed_direction(),
+			canvas.width - 50,
+			canvas.height - 40
+		]);
+	let keys = Object.keys(pressedPool);
+	for(var i=0; i<keys.length; i++){
+		request.push([
+			'debug',
+			keys[i] + ': ' + pressedPool[keys[i]],
+			canvas.width - 50,
+			canvas.height - 50 - (i * 10)
+		]);
+	};
 	
 	// Game Over
 	if(!Maik.playable){
@@ -474,6 +510,9 @@ function gameLoop(){
 		spawn();
 		pre = second;
 	}
+	
+	// Calcular hold de las teclas
+	pressed_hold();
 	
 	/*
 	// Imprimir llamadas por segundo
@@ -632,15 +671,149 @@ function move_particle(part){
 }
 
 // CAPTURA DE POSICIÓN DEL MOUSE
-function getMousePos(canvas, evt) {
-    var rect = canvas.getBoundingClientRect(),root = document.documentElement;
+function getMousePos(canvas, evt){
+    var rect = canvas.getBoundingClientRect();
+	var root = document.documentElement;
 	
-	// return relative mouse position
+	// Posición relativa del mouse
     var mouseX = evt.clientX - rect.left - root.scrollLeft;
     var mouseY = evt.clientY - rect.top - root.scrollTop;
-	
     return {
       x: mouseX,
       y: mouseY
     };
-}
+};
+
+// CALCULAR TECLA DOMINANTE DE UNA DICOTOMÍA
+function pressed_k1_over_k2(k1, k2){
+	
+	// Presencia en la lista actual de teclas presionadas
+	let p1 = pressedPool[k1];
+	let p2 = pressedPool[k2];
+	
+	// No hay respuesta si ninguna tecla está siendo presionada
+	if(p1 == undefined && p2 == undefined){
+		return null;
+		
+	// Casos triviales
+	}else if(p1 != undefined && p2 == undefined){
+		return true;
+	}else if(p1 == undefined && p2 != undefined){
+		return false;
+	
+	// Comparar el orden de inclusión en la lista en caso de que estén en disputa
+	}else{
+		let o1 = p1[0];
+		let o2 = p2[0];
+		if(o1 > o2){
+			return true;
+		}else{
+			return false;
+		};
+	};
+};
+
+// CALCULAR DIRECCIÓN PRESIONADA
+function pressed_direction(){
+	
+	// Dicotomías
+	let x = pressed_k1_over_k2(RIGHT, LEFT);
+	let y = pressed_k1_over_k2(UP, DOWN);
+	
+	// Decisión entre las 9 direcciones
+	if(x == null){
+		if(y == null){
+			return 5;
+		}else if(y){
+			return 8;
+		}else{
+			return 2;
+		};
+	}else if(x){
+		if(y == null){
+			return 6;
+		}else if(y){
+			return 9;
+		}else{
+			return 3;
+		};
+	}else{
+		if(y == null){
+			return 4;
+		}else if(y){
+			return 7;
+		}else{
+			return 1;
+		};
+	};
+};
+
+// HOLD DE LAS TECLAS PRESIONADAS
+function pressed_hold(){
+	
+	// Lista actual de teclas presionadas
+	let keys = Object.keys(pressedPool);
+	
+	// Aumentar hold del grupo
+	for(var i=0; i<keys.length; i++){
+				
+		// tecla i-ésima
+		let i_code = keys[i];
+		
+		// Aumentar hold i-ésimo
+		pressedPool[i_code][1]++;
+	};
+};
+
+// CALCULAR TECLAS PRESIONADAS
+function pressed_pool(code, add){
+	
+	// Lista previa de teclas presionadas
+	let keys = Object.keys(pressedPool);
+	
+	// Tecla presionada
+	if(add){
+		
+		// Si la tecla no está en la lista previa, agregarla de último con hold 0
+		if(pressedPool[code] == undefined){
+			pressedPool[code] = [keys.length, 0];
+		};
+		
+	// Tecla aliviada
+	}else{
+		
+		// Lista actual de teclas presionadas
+		let currentPressedPool = {};
+		
+		// Orden de la tecla aliviada
+		let orderOut = pressedPool[code][0];
+		
+		// Recorrer la lista previa para crear la actual
+		for(var i=0; i<keys.length; i++){
+			
+			// tecla i-ésima
+			let i_code = keys[i];
+			
+			// Si la tecla i-ésima no es la que se alivió, agregarla a la lista actual 
+			if(i_code != code){
+				let i_pressed = pressedPool[i_code];
+				
+				// Checar orden y hold de la tecla i-ésima
+				let i_order = i_pressed[0];
+				let i_hold = i_pressed[1];
+				
+				// Si la tecla i-ésima es de orden superior a la tecla aliviada, bajarla
+				if(i_order > orderOut){
+					currentPressedPool[i_code] = [i_order - 1, i_hold];
+					
+				// Copiar la tecla i-ésima si su orden es inferior a la tecla aliviada
+				}else{
+					currentPressedPool[i_code] = i_pressed;
+				};
+			};
+		};
+		
+		// Actualizar lista
+		pressedPool = currentPressedPool;
+	};
+};

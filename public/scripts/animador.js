@@ -1,6 +1,3 @@
-// Notificar la ejecución del código animador
-//console.log('> Ejecución del código Worker.');
-
 // Contexto del canvas
 var ctx = null;
 
@@ -61,12 +58,12 @@ self.onmessage = function(e) {
 			// Almacenar
 			requests = e.data.req;
 			break;
-	}
-}
+	};
+};
 
 // FRAME DE ANIMACIÓN
 function animate(){
-		
+	
 	// Verificar que se hayan recibido los recursos gráficos
 	if(maik_img == null || nega_img == null){
 		requestAnimationFrame(animate);
