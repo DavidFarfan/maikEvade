@@ -257,13 +257,38 @@ class Maik {
 
 //--------- HILO PRINCIPAL ------------
 
+// Teclas direccionales
+const UP = 'KeyW';
+const DOWN = 'KeyS';
+const RIGHT = 'KeyD';
+const LEFT = 'KeyA';
+
+// Teclas presionadas
+var pressedPool = {};
+
 // Se corre una instancia de Worker (hilo) con el código animador
 const animator = new Worker("/scripts/animador.js");
+
+// Esperar el sheet montado por el animador
+animator.addEventListener("message", (msg) => {
+	console.log("Sheet recibido del animador:", msg);
+	const sheet = msg.data.palanca;
+	console.log(sheet);
+	const sheet_canvas = msg.data.canvas;
+	console.log(sheet_canvas);
+	const sheet_canvas_ctx = sheet_canvas.getContext('bitmaprenderer');
+	sheet_canvas_ctx.transferFromImageBitmap(sheet);
+	sheet_canvas.convertToBlob().then((resolve) => {
+		const img = new Image();
+		const url = URL.createObjectURL(resolve)
+		img.src = url;
+		console.log(url);
+	});
+});
 
 // El canvas puede transferir al Worker el control de su contexto.
 // para eso, se lo tiene que enviar a través de un mensaje con un objeto Offscreen conteniéndolo.
 const canvas = document.getElementById('draw');
-const main_offscreen = canvas.transferControlToOffscreen();
 
 // Posicion del mouse
 var mousePos = {
@@ -271,8 +296,18 @@ var mousePos = {
 	y: .5 * canvas.height
 };
 
-// Capturar posición del mouse ante cualquier movimiento
-canvas.addEventListener('mousemove', evt => {
+// Capturar presión de tecla
+window.addEventListener('keydown', (evt) => {
+	pressed_pool(evt.code, true);
+}, false);
+
+// Capturar alivio de tecla
+window.addEventListener('keyup', (evt) => {
+	pressed_pool(evt.code, false);
+}, false);
+
+// Capturar posición del mouse
+canvas.addEventListener('mousemove', (evt) => {
 	mousePos = getMousePos(canvas, evt);
 }, false);
 
@@ -281,10 +316,203 @@ canvas.addEventListener('click', () => {
 	location.reload();
 }, false);
 
+const main_offscreen = canvas.transferControlToOffscreen();
+
 // Enviar al animador el contexto
 animator.postMessage({ type: 'context', canvas: main_offscreen }, [main_offscreen]);
 //console.log('> Contexto enviado al animador.');
 
+
+//---------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+// Leer palanca (1)
+var p1 = new Image();
+p1.crossOrigin = 'anonymous';
+p1.src = 'assets/1.png';
+p1.onload = function() {
+	
+	// Convertir sprite a formato transferible
+	const aux_canvas = new OffscreenCanvas(
+		p1.width, 
+		p1.height
+	)
+	aux_canvas.getContext('2d').drawImage(p1, 0, 0);
+	createImageBitmap(aux_canvas).then(resolve => {
+		
+		// Enviar la imagen base al animador
+		animator.postMessage({ type: 'p1', bitmap: resolve }, [resolve]);
+	});
+};
+
+// Leer palanca (2)
+var p2 = new Image();
+p2.crossOrigin = 'anonymous';
+p2.src = 'assets/2.png';
+p2.onload = function() {
+	
+	// Convertir sprite a formato transferible
+	const aux_canvas = new OffscreenCanvas(
+		p2.width, 
+		p2.height
+	)
+	aux_canvas.getContext('2d').drawImage(p2, 0, 0);
+	createImageBitmap(aux_canvas).then(resolve => {
+		
+		// Enviar la imagen base al animador
+		animator.postMessage({ type: 'p2', bitmap: resolve }, [resolve]);
+	});
+};
+
+// Leer palanca (3)
+var p3 = new Image();
+p3.crossOrigin = 'anonymous';
+p3.src = 'assets/3.png';
+p3.onload = function() {
+	
+	// Convertir sprite a formato transferible
+	const aux_canvas = new OffscreenCanvas(
+		p3.width, 
+		p3.height
+	)
+	aux_canvas.getContext('2d').drawImage(p3, 0, 0);
+	createImageBitmap(aux_canvas).then(resolve => {
+		
+		// Enviar la imagen base al animador
+		animator.postMessage({ type: 'p3', bitmap: resolve }, [resolve]);
+	});
+};
+
+// Leer palanca (4)
+var p4 = new Image();
+p4.crossOrigin = 'anonymous';
+p4.src = 'assets/4.png';
+p4.onload = function() {
+	
+	// Convertir sprite a formato transferible
+	const aux_canvas = new OffscreenCanvas(
+		p4.width, 
+		p4.height
+	)
+	aux_canvas.getContext('2d').drawImage(p4, 0, 0);
+	createImageBitmap(aux_canvas).then(resolve => {
+		
+		// Enviar la imagen base al animador
+		animator.postMessage({ type: 'p4', bitmap: resolve }, [resolve]);
+	});
+};
+
+// Leer palanca (5)
+var p5 = new Image();
+p5.crossOrigin = 'anonymous';
+p5.src = 'assets/5.png';
+p5.onload = function() {
+	
+	// Convertir sprite a formato transferible
+	const aux_canvas = new OffscreenCanvas(
+		p5.width, 
+		p5.height
+	)
+	aux_canvas.getContext('2d').drawImage(p5, 0, 0);
+	createImageBitmap(aux_canvas).then(resolve => {
+		
+		// Enviar la imagen base al animador
+		animator.postMessage({ type: 'p5', bitmap: resolve }, [resolve]);
+	});
+};
+
+// Leer palanca (6)
+var p6 = new Image();
+p6.crossOrigin = 'anonymous';
+p6.src = 'assets/6.png';
+p6.onload = function() {
+	
+	// Convertir sprite a formato transferible
+	const aux_canvas = new OffscreenCanvas(
+		p6.width, 
+		p6.height
+	)
+	aux_canvas.getContext('2d').drawImage(p6, 0, 0);
+	createImageBitmap(aux_canvas).then(resolve => {
+		
+		// Enviar la imagen base al animador
+		animator.postMessage({ type: 'p6', bitmap: resolve }, [resolve]);
+	});
+};
+
+// Leer palanca (7)
+var p7 = new Image();
+p7.crossOrigin = 'anonymous';
+p7.src = 'assets/7.png';
+p7.onload = function() {
+	
+	// Convertir sprite a formato transferible
+	const aux_canvas = new OffscreenCanvas(
+		p7.width, 
+		p7.height
+	)
+	aux_canvas.getContext('2d').drawImage(p7, 0, 0);
+	createImageBitmap(aux_canvas).then(resolve => {
+		
+		// Enviar la imagen base al animador
+		animator.postMessage({ type: 'p7', bitmap: resolve }, [resolve]);
+	});
+};
+
+// Leer palanca (8)
+var p8 = new Image();
+p8.crossOrigin = 'anonymous';
+p8.src = 'assets/8.png';
+p8.onload = function() {
+	
+	// Convertir sprite a formato transferible
+	const aux_canvas = new OffscreenCanvas(
+		p8.width, 
+		p8.height
+	)
+	aux_canvas.getContext('2d').drawImage(p8, 0, 0);
+	createImageBitmap(aux_canvas).then(resolve => {
+		
+		// Enviar la imagen base al animador
+		animator.postMessage({ type: 'p8', bitmap: resolve }, [resolve]);
+	});
+};
+
+// Leer palanca (9)
+var p9 = new Image();
+p9.crossOrigin = 'anonymous';
+p9.src = 'assets/9.png';
+p9.onload = function() {
+	
+	// Convertir sprite a formato transferible
+	const aux_canvas = new OffscreenCanvas(
+		p9.width, 
+		p9.height
+	)
+	aux_canvas.getContext('2d').drawImage(p9, 0, 0);
+	createImageBitmap(aux_canvas).then(resolve => {
+		
+		// Enviar la imagen base al animador
+		animator.postMessage({ type: 'p9', bitmap: resolve }, [resolve]);
+	});
+};
+
+console.log('movimientos de palanca enviados');
+
+
+
+
+
+
+
+//_----------------------------------------------------------------------
 // Leer sprite de Maik
 const base = new Image();
 base.crossOrigin = 'anonymous';
@@ -441,7 +669,24 @@ function gameLoop(){
 	});
 	
 	// Escribir número de Negas
-	request.push(['debug', enemy_counter, canvas.width - 30, canvas.height - 30]);
+	request.push(['debug', enemy_counter, canvas.width - 50, canvas.height - 30]);
+	
+	// Debug: teclas
+	request.push([
+			'debug',
+			pressed_direction(),
+			canvas.width - 50,
+			canvas.height - 40
+		]);
+	let keys = Object.keys(pressedPool);
+	for(var i=0; i<keys.length; i++){
+		request.push([
+			'debug',
+			keys[i] + ': ' + pressedPool[keys[i]],
+			canvas.width - 50,
+			canvas.height - 50 - (i * 10)
+		]);
+	};
 	
 	// Game Over
 	if(!Maik.playable){
@@ -474,6 +719,9 @@ function gameLoop(){
 		spawn();
 		pre = second;
 	}
+	
+	// Calcular hold de las teclas
+	pressed_hold();
 	
 	/*
 	// Imprimir llamadas por segundo
@@ -632,15 +880,149 @@ function move_particle(part){
 }
 
 // CAPTURA DE POSICIÓN DEL MOUSE
-function getMousePos(canvas, evt) {
-    var rect = canvas.getBoundingClientRect(),root = document.documentElement;
+function getMousePos(canvas, evt){
+    var rect = canvas.getBoundingClientRect();
+	var root = document.documentElement;
 	
-	// return relative mouse position
+	// Posición relativa del mouse
     var mouseX = evt.clientX - rect.left - root.scrollLeft;
     var mouseY = evt.clientY - rect.top - root.scrollTop;
-	
     return {
       x: mouseX,
       y: mouseY
     };
-}
+};
+
+// CALCULAR TECLA DOMINANTE DE UNA DICOTOMÍA
+function pressed_k1_over_k2(k1, k2){
+	
+	// Presencia en la lista actual de teclas presionadas
+	let p1 = pressedPool[k1];
+	let p2 = pressedPool[k2];
+	
+	// No hay respuesta si ninguna tecla está siendo presionada
+	if(p1 == undefined && p2 == undefined){
+		return null;
+		
+	// Casos triviales
+	}else if(p1 != undefined && p2 == undefined){
+		return true;
+	}else if(p1 == undefined && p2 != undefined){
+		return false;
+	
+	// Comparar el orden de inclusión en la lista en caso de que estén en disputa
+	}else{
+		let o1 = p1[0];
+		let o2 = p2[0];
+		if(o1 > o2){
+			return true;
+		}else{
+			return false;
+		};
+	};
+};
+
+// CALCULAR DIRECCIÓN PRESIONADA
+function pressed_direction(){
+	
+	// Dicotomías
+	let x = pressed_k1_over_k2(RIGHT, LEFT);
+	let y = pressed_k1_over_k2(UP, DOWN);
+	
+	// Decisión entre las 9 direcciones
+	if(x == null){
+		if(y == null){
+			return 5;
+		}else if(y){
+			return 8;
+		}else{
+			return 2;
+		};
+	}else if(x){
+		if(y == null){
+			return 6;
+		}else if(y){
+			return 9;
+		}else{
+			return 3;
+		};
+	}else{
+		if(y == null){
+			return 4;
+		}else if(y){
+			return 7;
+		}else{
+			return 1;
+		};
+	};
+};
+
+// HOLD DE LAS TECLAS PRESIONADAS
+function pressed_hold(){
+	
+	// Lista actual de teclas presionadas
+	let keys = Object.keys(pressedPool);
+	
+	// Aumentar hold del grupo
+	for(var i=0; i<keys.length; i++){
+				
+		// tecla i-ésima
+		let i_code = keys[i];
+		
+		// Aumentar hold i-ésimo
+		pressedPool[i_code][1]++;
+	};
+};
+
+// CALCULAR TECLAS PRESIONADAS
+function pressed_pool(code, add){
+	
+	// Lista previa de teclas presionadas
+	let keys = Object.keys(pressedPool);
+	
+	// Tecla presionada
+	if(add){
+		
+		// Si la tecla no está en la lista previa, agregarla de último con hold 0
+		if(pressedPool[code] == undefined){
+			pressedPool[code] = [keys.length, 0];
+		};
+		
+	// Tecla aliviada
+	}else{
+		
+		// Lista actual de teclas presionadas
+		let currentPressedPool = {};
+		
+		// Orden de la tecla aliviada
+		let orderOut = pressedPool[code][0];
+		
+		// Recorrer la lista previa para crear la actual
+		for(var i=0; i<keys.length; i++){
+			
+			// tecla i-ésima
+			let i_code = keys[i];
+			
+			// Si la tecla i-ésima no es la que se alivió, agregarla a la lista actual 
+			if(i_code != code){
+				let i_pressed = pressedPool[i_code];
+				
+				// Checar orden y hold de la tecla i-ésima
+				let i_order = i_pressed[0];
+				let i_hold = i_pressed[1];
+				
+				// Si la tecla i-ésima es de orden superior a la tecla aliviada, bajarla
+				if(i_order > orderOut){
+					currentPressedPool[i_code] = [i_order - 1, i_hold];
+					
+				// Copiar la tecla i-ésima si su orden es inferior a la tecla aliviada
+				}else{
+					currentPressedPool[i_code] = i_pressed;
+				};
+			};
+		};
+		
+		// Actualizar lista
+		pressedPool = currentPressedPool;
+	};
+};

@@ -1,6 +1,3 @@
-// Notificar la ejecución del código animador
-//console.log('> Ejecución del código Worker.');
-
 // Contexto del canvas
 var ctx = null;
 
@@ -18,6 +15,24 @@ var requests = [];
 // Argumentos para el dibujo
 var drawCages = [];
 
+//------------------------------
+
+
+
+var p1 = null;
+var p2 = null;
+var p3 = null;
+var p4 = null;
+var p5 = null;
+var p6 = null;
+var p7 = null;
+var p8 = null;
+var p9 = null;
+
+
+
+//-------------------------------
+
 // COMUNICACIÓN CON MAIN
 self.onmessage = function(e) {
 	switch (e.data.type) {
@@ -34,6 +49,90 @@ self.onmessage = function(e) {
 			// Comenzar loop de animación
 			animate();
 			break;
+		
+		//----------------------------------------------
+		
+		
+		
+		// Recibir p1
+		case 'p1':
+			
+			// Almacenar
+			console.log('> p1.');
+			p1 = e.data.bitmap;
+			break;
+		
+		// Recibir p2
+		case 'p2':
+			
+			// Almacenar
+			console.log('> p2.');
+			p2 = e.data.bitmap;
+			break;
+		
+		// Recibir p3
+		case 'p3':
+			
+			// Almacenar
+			console.log('> p3.');
+			p3 = e.data.bitmap;
+			break;
+		
+		// Recibir p4
+		case 'p4':
+			
+			// Almacenar
+			console.log('> p4.');
+			p4 = e.data.bitmap;
+			break;
+		
+		// Recibir p5
+		case 'p5':
+			
+			// Almacenar
+			console.log('> p5.');
+			p5 = e.data.bitmap;
+			break;
+			
+		// Recibir p6
+		case 'p6':
+			
+			// Almacenar
+			console.log('> p6.');
+			p6 = e.data.bitmap;
+			break;
+			
+		// Recibir p7
+		case 'p7':
+			
+			// Almacenar
+			console.log('> p7.');
+			p7 = e.data.bitmap;
+			break;	
+		
+		// Recibir p8
+		case 'p8':
+			
+			// Almacenar
+			console.log('> p8.');
+			p8 = e.data.bitmap;
+			break;	
+		
+		// Recibir p9
+		case 'p9':
+			
+			// Almacenar
+			console.log('> p9.');
+			p9 = e.data.bitmap;
+			
+			// Montar sheet
+			palanca();
+			break;	
+		
+		
+		
+		//---------------------------------------------
+		
 		
 		// Recibir imagen base
 		case 'imagen_base':
@@ -64,9 +163,194 @@ self.onmessage = function(e) {
 	}
 }
 
+//---------------------------------------
+
+
+function palanca(){
+	
+	console.log('montando sheet');
+	
+	// Se crea un canvas invisible y se obtiene su contexto para hacer operaciones
+	const sheet_canvas = new OffscreenCanvas(
+		p1.width, 
+		p1.height * 9
+	);
+	const sheet_ctx = sheet_canvas.getContext('2d');
+	const sheet_msg = new OffscreenCanvas(
+		p1.width, 
+		p1.height * 9
+	);
+	
+	// Dibujar la palanca en serie
+	d_p(sheet_ctx);
+	
+	// Guardar sheet
+	const sheet = sheet_canvas.transferToImageBitmap();
+	
+	// Enviar sheet al main a través de Offscreen
+	console.log('enviando sheet');
+	
+	// send buf back to main and transfer the underlying ArrayBuffer
+	self.postMessage({ palanca: sheet , canvas: sheet_msg }, [sheet, sheet_msg]);
+};
+
+function d_p(sheet_ctx){
+	d_p1(sheet_ctx);
+	d_p2(sheet_ctx);
+	d_p3(sheet_ctx);
+	d_p4(sheet_ctx);
+	d_p5(sheet_ctx);
+	d_p6(sheet_ctx);
+	d_p7(sheet_ctx);
+	d_p8(sheet_ctx);
+	d_p9(sheet_ctx);
+};
+
+
+function d_p1(sheet_ctx){
+	
+	// Dibujar lo leído en el canvas principal
+	sheet_ctx.drawImage(
+		p1,
+		0,
+		0
+	);
+};
+
+function d_p2(sheet_ctx){
+	
+	// Dibujar lo leído en el canvas principal
+	sheet_ctx.drawImage(
+		p2,
+		0,
+		p1.height * 1
+	);
+};
+
+function d_p3(sheet_ctx){
+	
+	// Dibujar lo leído en el canvas principal
+	sheet_ctx.drawImage(
+		p3,
+		0,
+		p1.height * 2
+	);
+};
+
+function d_p4(sheet_ctx){
+	
+	// Dibujar lo leído en el canvas principal
+	sheet_ctx.drawImage(
+		p4,
+		0,
+		p1.height * 3
+	);
+};
+
+function d_p5(sheet_ctx){
+	
+	// Dibujar lo leído en el canvas principal
+	sheet_ctx.drawImage(
+		p5,
+		0,
+		p1.height * 4
+	);
+};
+
+function d_p6(sheet_ctx){
+	
+	// Dibujar lo leído en el canvas principal
+	sheet_ctx.drawImage(
+		p6,
+		0,
+		p1.height * 5
+	);
+};
+
+function d_p7(sheet_ctx){
+	
+	// Dibujar lo leído en el canvas principal
+	sheet_ctx.drawImage(
+		p7,
+		0,
+		p1.height * 6
+	);
+};
+
+function d_p8(sheet_ctx){
+	
+	// Dibujar lo leído en el canvas principal
+	sheet_ctx.drawImage(
+		p8,
+		0,
+		p1.height * 7
+	);
+};
+
+function d_p9(sheet_ctx){
+	
+	// Dibujar lo leído en el canvas principal
+	sheet_ctx.drawImage(
+		p9,
+		0,
+		p1.height * 8
+	);
+};
+
+
+
+
+//---------------------------------------
+
 // FRAME DE ANIMACIÓN
 function animate(){
-		
+	
+	
+	//---------------------------------
+	
+	
+	// Verificar que se haya recibido la palanca
+	if(p1 == null){
+		requestAnimationFrame(animate);
+		return;
+	};
+	if(p2 == null){
+		requestAnimationFrame(animate);
+		return;
+	};
+	if(p3 == null){
+		requestAnimationFrame(animate);
+		return;
+	};
+	if(p4 == null){
+		requestAnimationFrame(animate);
+		return;
+	};
+	if(p5 == null){
+		requestAnimationFrame(animate);
+		return;
+	};
+	if(p6 == null){
+		requestAnimationFrame(animate);
+		return;
+	};
+	if(p7 == null){
+		requestAnimationFrame(animate);
+		return;
+	};
+	if(p8 == null){
+		requestAnimationFrame(animate);
+		return;
+	};
+	if(p9 == null){
+		requestAnimationFrame(animate);
+		return;
+	};
+	
+	//---------------------------------
+	
+	
+	
 	// Verificar que se hayan recibido los recursos gráficos
 	if(maik_img == null || nega_img == null){
 		requestAnimationFrame(animate);
@@ -100,11 +384,13 @@ function animate(){
 	// Limpiar canvas
 	erase();
 	
+	/*
 	// Resolución del pedido
 	drawCages = [];
 	reqs.forEach(function(value, index, array){
 		solve(value, drawCages);
 	});
+	*/
 	
 	// Imprimir frame
 	requestAnimationFrame(animate);
