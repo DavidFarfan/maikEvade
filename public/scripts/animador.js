@@ -4,6 +4,7 @@ var ctx = null;
 // Imagenes
 var maik_img = null;
 var nega_img = null;
+var joystick = null;
 
 // Rotaciones
 var maik_rot = null;
@@ -30,6 +31,16 @@ self.onmessage = function(e) {
 			
 			// Comenzar loop de animación
 			animate();
+			break;
+		
+		// Recibir palanca
+		case 'palanca':
+			
+			// Almacenar
+			joystick = e.data.bitmap;
+			
+			// Notificar operación
+			//console.log('> Imagen base recibida.');
 			break;
 		
 		// Recibir imagen base
@@ -64,8 +75,14 @@ self.onmessage = function(e) {
 // FRAME DE ANIMACIÓN
 function animate(){
 	
-	// Verificar que se hayan recibido los recursos gráficos
+	// Verificar que se hayan recibido los sprites
 	if(maik_img == null || nega_img == null){
+		requestAnimationFrame(animate);
+		return;
+	}
+	
+	// Verificar que se hayan recibido la palanca
+	if(joystick == null){
 		requestAnimationFrame(animate);
 		return;
 	}
@@ -110,6 +127,9 @@ function animate(){
 // RESOLVER EL ÍTEM DE UN PEDIDO
 function solve(req, drawcages){
 	switch(req[0]){
+		case 'joystick':
+			direction(req[1]);
+			break;
 		case 'maik':
 			maik(req, drawcages, true);
 			break;
@@ -145,6 +165,23 @@ function solve(req, drawcages){
 	}
 	return;
 }
+
+// PALANCA
+function direction(code){
+	
+	// Recorte correspondiente a la dirección
+	ctx.drawImage(
+		joystick,
+		0,
+		( code - 1 ) * ( joystick.height / 9 ),
+		joystick.width,
+		joystick.height / 9,
+		20,
+		350,
+		80,
+		80
+	);
+};
 
 // RESOLVER PETICIÓN DE UN JUGADOR/ENEMIGO
 function maik(req, drawcages, player){

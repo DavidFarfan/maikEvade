@@ -258,10 +258,10 @@ class Maik {
 //--------- HILO PRINCIPAL ------------
 
 // Teclas direccionales
-const UP = 'KeyW';
-const DOWN = 'KeyS';
-const RIGHT = 'KeyD';
-const LEFT = 'KeyA';
+const UP = 'KeyU';
+const DOWN = 'KeyN';
+const RIGHT = 'KeyK';
+const LEFT = 'KeyH';
 
 // Teclas presionadas
 var pressedPool = {};
@@ -304,6 +304,25 @@ const main_offscreen = canvas.transferControlToOffscreen();
 // Enviar al animador el contexto
 animator.postMessage({ type: 'context', canvas: main_offscreen }, [main_offscreen]);
 
+// Leer palanca
+const joystick = new Image();
+joystick.crossOrigin = 'anonymous';
+joystick.src = 'assets/palanca.png';
+joystick.onload = function() {
+	
+	// Convertir sprite a formato transferible
+	const aux_canvas = new OffscreenCanvas(
+		joystick.width, 
+		joystick.height
+	)
+	aux_canvas.getContext('2d').drawImage(joystick, 0, 0);
+	createImageBitmap(aux_canvas).then(resolve => {
+		
+		// Enviar el sheet de la palanca al animador
+		animator.postMessage({ type: 'palanca', bitmap: resolve }, [resolve]);
+	});
+};
+
 // Leer sprite de Maik
 const base = new Image();
 base.crossOrigin = 'anonymous';
@@ -321,7 +340,6 @@ base.onload = function() {
 		// Enviar la imagen base al animador
 		animator.postMessage({ type: 'imagen_base', bitmap: resolve }, [resolve]);
 	});
-	//console.log('> Imagen base enviada al animador.');
 };
 
 // Leer sprite de Nega-Maik
@@ -341,7 +359,6 @@ nega.onload = function() {
 		// Enviar la imagen nega al animador
 		animator.postMessage({ type: 'imagen_nega', bitmap: resolve }, [resolve]);
 	});
-	//console.log('> Imagen nega enviada al animador.');
 };
 
 // Argumentos para el spawneo
@@ -487,6 +504,9 @@ function gameLoop(){
 	}else if(Maik.win){
 		request.push(['win']);
 	}
+	
+	// Joystick
+	request.push(['joystick', pressed_direction()]);
 	
 	// Enviar petición al animador
 	animator.postMessage({ type: 'request', req: request});
