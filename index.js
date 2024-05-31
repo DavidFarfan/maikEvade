@@ -234,6 +234,9 @@ send();
 // 3YEzs81RaUVzBCbGUUFHB1uNvxNy6vfwS4X8wN46dFpyNKggqsZmoqSDtr3ppGEgNXJdawVnHkfnUwtmpmUBa3Rc
 */
 
+// import
+var fs = require('fs');
+
 // SolanaWeb3API
 const {
   Keypair,
@@ -244,7 +247,7 @@ const {
   clusterApiUrl,
   PublicKey,
   TransactionInstruction,
-  sendAndConfirmTransaction
+  sendAndConfirmTransaction,
 } = require("@solana/web3.js");
 
 // TokenProgram
@@ -281,82 +284,87 @@ async function balance_print(){
 };
 //balance_print();
 
-// Create an empty transaction
-console.log('Creating transaction...');
-const transaction = new Transaction();
-//console.log(transaction);
-
-// Disección de transacciones
-function getTransfers(instructions){
-	let instructions_keypoints = [];
-	for(var i=0; i<instructions.length; i++){
-		if(instructions[i].parsed != null){
-			if(instructions[i].parsed.type == 'transfer' ){
-				if(instructions[i].parsed.info.lamports != null){
-					instructions_keypoints.push({
-						destination: instructions[i].parsed.info.destination,
-						amount_d: instructions[i].parsed.info.lamports / LAMPORTS_PER_SOL,
-						source: instructions[i].parsed.info.source,
-					});
-				}else if(instructions[i].parsed.info.amount != null){
-					instructions_keypoints.push({
-						amount_d: instructions[i].parsed.info.amount / LAMPORTS_PER_SOL,
-						authority: instructions[i].parsed.info.authority,
-						destination: instructions[i].parsed.info.destination,
-						source: instructions[i].parsed.info.source,
-					});
-				}else{
-					instructions_keypoints.push( instructions[i].parsed.info );
-				};
-			};
-		};
-	};
-	return instructions_keypoints;
-};
-
 // Pambi Transactions
-async function getTransactions(address){
-	let transactions = await connection.getSignaturesForAddress(
-		address,
+async function getTransactions(wallet1, wallet2){
+	
+	// Suma que no aparece como transfer
+	let no_appearing = await connection.getTransaction(
+		'44xfPN1XD2xytpzTKxGo4zxp1MYVX7smceGzE2rXRNQqA5EhfjXHnzpUvhHtZBm3HgwkaCNEpbtXwvHp5QTMNbMr',
+		{"maxSupportedTransactionVersion": 0},
 	);
-	transactions = await connection.getParsedTransactions(
-		transactions.map(tran=>tran.signature),
+	console.log(no_appearing.transaction.message.compiledInstructions);
+	
+	// Account 1s
+	let pambi_account_1 = await getOrCreateAssociatedTokenAccount(
+		connection,
+		my_keypair,
+		new PublicKey('3TdsyqMn2sCqxEFf9B8hATCrMEW1Xh2thUTs7fpr2Rur'),
+		wallet1,
+	);
+	console.log('Pambi Account 1: ' + pambi_account_1.address);
+	console.log('Owned by: ' + pambi_account_1.owner);
+	
+	// Account 2
+	let pambi_account_2 = await getOrCreateAssociatedTokenAccount(
+		connection,
+		my_keypair,
+		new PublicKey('3TdsyqMn2sCqxEFf9B8hATCrMEW1Xh2thUTs7fpr2Rur'),
+		wallet2,
+	);
+	console.log('Pambi Account 2: ' + pambi_account_2.address);
+	console.log('Owned by: ' + pambi_account_2.owner);
+	
+	// Get all Transactions
+	let signatures = await connection.getSignaturesForAddress(
+		wallet1,
+		{
+			limit: 150
+		}
+	);
+	signatures = signatures.map(tran=>tran.signature);
+	let rough_transactions = await connection.getParsedTransactions(
+		signatures,
 		{'maxSupportedTransactionVersion': 0}
 	);
-	transactions = transactions.map(ins=>getTransfers(ins));
-	transactions = transactions.map(tran=>tran.transaction.message.instructions);
-	console.log(transactions);
+	let transactions = rough_transactions.map(tran=>tran.transaction.message.instructions);
+	
+	// Include only relevant transfers
+	let relevant_transactions = [];
+	for(let i=0; i<transactions.length; i++){
+		let relevant_instructions = [];
+		for(let j=0; j<transactions[i].length; j++){
+			relevant_instructions.push(transactions[i][j]);
+		};
+		relevant_transactions.push({
+			signature: signatures[i],
+			instructions: relevant_instructions,
+		});
+	};
+	
+	// Output
+	let data = JSON.stringify({ 'Output':relevant_transactions }, null, 4);
+	fs.writeFile("output.txt", data, (err) => {
+	  if (err)
+		console.log(err);
+	  else {
+		console.log("File written successfully\n");
+	  }
+	});
 };
+
+getTransactions(
+	new PublicKey(bs58.encode(my_address)),
+	new PublicKey(bs58.encode(my_address_3)),
+);
 
 // Pambi info.
 async function pambinfo(){
-	balance_print();
 	console.log('Pambi info.:');
 	let pambi_mint = await getMint(
 		connection,
 		new PublicKey('3TdsyqMn2sCqxEFf9B8hATCrMEW1Xh2thUTs7fpr2Rur'),
 	);
 	//console.log(pambi_mint);
-	
-	// Sender account
-	let my_pambi_account = await getOrCreateAssociatedTokenAccount(
-		connection,
-		my_keypair,
-		new PublicKey('3TdsyqMn2sCqxEFf9B8hATCrMEW1Xh2thUTs7fpr2Rur'),
-		new PublicKey(bs58.encode(my_address)),
-	);
-	//console.log('Pambi sender:');
-	//console.log(my_pambi_account);
-	
-	// Receiver account
-	let my_pambi_account_3 = await getOrCreateAssociatedTokenAccount(
-		connection,
-		my_keypair_3,
-		new PublicKey('3TdsyqMn2sCqxEFf9B8hATCrMEW1Xh2thUTs7fpr2Rur'),
-		new PublicKey(bs58.encode(my_address_3)),
-	);
-	//console.log('Pambi receiver:');
-	//console.log(my_pambi_account_3);
 	
 	/*// Transfer Pambi
     let tx_transfer = await transfer(
@@ -370,9 +378,9 @@ async function pambinfo(){
 	console.log('Confirmation Hash:');
 	console.log(tx_transfer);
 	*/
-	getTransactions(new PublicKey(bs58.encode(my_address_2)));
+	//let acc_info = await connection.getAccountInfo(new PublicKey('JDFWcBDCfxpXXaF5fi4Ndxt1eRjG9cRM1xt6FmMU59yK'));
+	//console.log(acc_info);
 };
-pambinfo();
 
 // Send the transaction to the Solana cluster
 async function send(){
