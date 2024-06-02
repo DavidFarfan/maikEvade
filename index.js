@@ -201,7 +201,7 @@ const {
 	transfer,
 } = require("@solana/spl-token");
 
-// Codificación base 58
+// Codificación en base 58
 let bs58 = require("bs58");
  
 // ------------------------My wallets
