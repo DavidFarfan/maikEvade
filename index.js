@@ -31,9 +31,9 @@ app.listen(app.get('port'), () => {
 // ---------------------------------------------------	Conexión con BitMart
 const axios = require('axios');
 const crypto = require('crypto');
-const BITMART_API_KEY = 'e38032d54fc4f3cfcbc46d6933c56ca95503fb72';
-const BITMART_API_SECRET = '503972188448f4b3a91b3f58d57e49ff2b1fa9962b44e6c97283d269e17e684c';
-const BITMART_API_MEMO = 'WhaleEvade';
+const BITMART_API_KEY = process.env.BITMART_API_KEY;
+const BITMART_API_SECRET = process.env.BITMART_API_SECRET;
+const BITMART_API_MEMO = process.env.BITMART_API_MEMO;
 const BITMART_BASE_URL = 'https://api-cloud.bitmart.com';
 
 // Get current timestamp
@@ -150,13 +150,13 @@ async function bitmart_withdraw_quota(){
 
 // Bitmart Withdraw
 // Necesito hacer una transferencia de PAMBI: es una tx, necesita firma y llave.
-async function bitmart_withdraw(){
+async function bitmart_withdraw(address_58){
 	const path = '/account/v1/withdraw/apply';
     const timestamp = get_timestamp();
     const body = {
         currency: 'PAMBI',
 		amount: 0,
-		address: 'A3oCgKqAdADBRJof7bKoJsGVfVJsyUXQxyCnJJjfsUga',
+		address: address_58,
 		address_memo: '',
 		destination: 'test01',
     };
@@ -176,65 +176,9 @@ async function bitmart_withdraw(){
     };
 };
  
-// ---------------------------------------------------	Conexión con Solana
-
-/*
-const {
-  Keypair,
-  Transaction,
-  LAMPORTS_PER_SOL,
-  Connection,
-  clusterApiUrl,
-  PublicKey,
-  TransactionInstruction,
-  sendAndConfirmTransaction
-} = require("@solana/web3.js");
-let bs58 = require("bs58");
-
-// Mi Wallet OKX
-let my_secret = bs58.decode('gYrkyANKHS9ZpXatmSHay9c7zpQR4zY7uQZuGFDhrxs4kzQAkps1YWUCzscyrResjM1mcjTZ7AgQF655AbYLJYa');
-let my_keypair = Keypair.fromSecretKey(my_secret);
-let my_address = my_keypair._keypair.publicKey; // A3oCgKqAdADBRJof7bKoJsGVfVJsyUXQxyCnJJjfsUga
-
-// La Wallet de Bitmart
-let my_address_2 = bs58.decode('7Xow1jH6oLAGLFzaUNYs7Nc4L5SWbLrrxdNRCccZFHfr');
-
-// Solana net program consumption
-let my_program = '5WncPKXnrgoaqEu7JNBPE6FSqjdA2uJwZfErZn79jbJv'; // My Solana On-chain Programs
-let connection = new Connection(clusterApiUrl("mainnet-beta"), "confirmed");
-async function balance_print(){
-	let balance = await connection.getBalance(new PublicKey(bs58.encode(my_address)), 'confirmed');
-	console.log('Balance (SOL): ' + (balance/LAMPORTS_PER_SOL).toString());
-};
-balance_print();
-
-// Create an empty transaction
-console.log('Creating transaction...');
-const transaction = new Transaction();
+ //----------------- Solana JS Client
  
-// Add my program instruction to the transaction
-transaction.add(
-  new TransactionInstruction({
-    keys: [],
-    programId: new PublicKey(my_program),
-  }),
-);
-
-// Send the transaction to the Solana cluster
-async function send(){
-	console.log("Sending transaction...");
-	let txHash = await sendAndConfirmTransaction(
-	  connection,
-	  transaction,
-	  [my_keypair],
-	);
-	console.log("Transaction sent with hash:", txHash);
-};
-send();
-// 3YEzs81RaUVzBCbGUUFHB1uNvxNy6vfwS4X8wN46dFpyNKggqsZmoqSDtr3ppGEgNXJdawVnHkfnUwtmpmUBa3Rc
-*/
-
-// import
+ // Module to write output
 var fs = require('fs');
 
 // SolanaWeb3API
@@ -259,90 +203,56 @@ const {
 
 // Codificación base 58
 let bs58 = require("bs58");
-
-// La Wallet OKX
-let my_secret = bs58.decode('gYrkyANKHS9ZpXatmSHay9c7zpQR4zY7uQZuGFDhrxs4kzQAkps1YWUCzscyrResjM1mcjTZ7AgQF655AbYLJYa');
-let my_keypair = Keypair.fromSecretKey(my_secret);
-let my_address = my_keypair._keypair.publicKey; // A3oCgKqAdADBRJof7bKoJsGVfVJsyUXQxyCnJJjfsUga
  
-// La Wallet de Bitmart
-let my_address_2 = bs58.decode('7Xow1jH6oLAGLFzaUNYs7Nc4L5SWbLrrxdNRCccZFHfr');
+// ------------------------My wallets
+ 
+// My Wallet
+ const MY_SIGN = signer_from_58(process.env.MY_WALLET);
+ const MY_ADDRESS = address_from_signer(MY_SIGN);
 
- // La Wallet Brave
- let my_secret_3 = bs58.decode('3iQvoA2hHqWr5fSsUqKuX9qSbZwgiEZtnhVeRPhokoiQ3LbpDDckzMDY6XWRTCqaffYKKoHVBgzdyinKwxgTycBi');
-let my_keypair_3 = Keypair.fromSecretKey(my_secret_3);
-let my_address_3 = my_keypair_3._keypair.publicKey; // BZcRxMuQdV9WkvZficAg8E6bp8cGSpQXfzEK22JN5Jmn
-//console.log(bs58.encode(my_address_3));
+// My OKX Wallet
+ const MY_OKX_SIGN = signer_from_58(process.env.MY_OKX_WALLET);
+ const MY_OKX_ADDRESS = address_from_signer(MY_OKX_SIGN);
+ 
+// My Brave Wallet
+ const MY_BRAVE_SIGN = signer_from_58(process.env.MY_BRAVE_WALLET);
+ const MY_BRAVE_ADDRESS = address_from_signer(MY_BRAVE_SIGN);
+ 
+// My Bitmart Wallet
+const MY_BITMART_ADDRESS = address_from_58(process.env.MY_BITMART_ADDRESS);
 
-// Solana net program consumption
-let connection = new Connection(clusterApiUrl("mainnet-beta"), "confirmed");
-async function balance_print(){
-	let balance_s = await connection.getBalance(new PublicKey(bs58.encode(my_address)), 'confirmed');
-	console.log('Balance Sender (SOL): ' + (balance_s/LAMPORTS_PER_SOL).toString());
-	let balance_rs = await connection.getBalance(new PublicKey(bs58.encode(my_address_3)), 'confirmed');
-	console.log('Balance Receiver (SOL): ' + (balance_rs/LAMPORTS_PER_SOL).toString());
+//-----------------------Solana app
+// El token Pambi
+const PAMBI_ADDRESS = address_from_58('3TdsyqMn2sCqxEFf9B8hATCrMEW1Xh2thUTs7fpr2Rur');
+
+// Signer from Secret String
+function signer_from_58(string){
+	return Keypair.fromSecretKey(bs58.decode(string)); 
 };
-//balance_print();
 
-// Pambi Transactions
-async function getTransactions(wallet1, wallet2){
-	
-	// Suma que no aparece como transfer
-	let no_appearing = await connection.getTransaction(
-		'44xfPN1XD2xytpzTKxGo4zxp1MYVX7smceGzE2rXRNQqA5EhfjXHnzpUvhHtZBm3HgwkaCNEpbtXwvHp5QTMNbMr',
-		{"maxSupportedTransactionVersion": 0},
-	);
-	console.log(no_appearing.transaction.message.compiledInstructions);
-	
-	// Account 1s
-	let pambi_account_1 = await getOrCreateAssociatedTokenAccount(
-		connection,
-		my_keypair,
-		new PublicKey('3TdsyqMn2sCqxEFf9B8hATCrMEW1Xh2thUTs7fpr2Rur'),
-		wallet1,
-	);
-	console.log('Pambi Account 1: ' + pambi_account_1.address);
-	console.log('Owned by: ' + pambi_account_1.owner);
-	
-	// Account 2
-	let pambi_account_2 = await getOrCreateAssociatedTokenAccount(
-		connection,
-		my_keypair,
-		new PublicKey('3TdsyqMn2sCqxEFf9B8hATCrMEW1Xh2thUTs7fpr2Rur'),
-		wallet2,
-	);
-	console.log('Pambi Account 2: ' + pambi_account_2.address);
-	console.log('Owned by: ' + pambi_account_2.owner);
-	
-	// Get all Transactions
-	let signatures = await connection.getSignaturesForAddress(
-		wallet1,
-		{
-			limit: 150
-		}
-	);
-	signatures = signatures.map(tran=>tran.signature);
-	let rough_transactions = await connection.getParsedTransactions(
-		signatures,
-		{'maxSupportedTransactionVersion': 0}
-	);
-	let transactions = rough_transactions.map(tran=>tran.transaction.message.instructions);
-	
-	// Include only relevant transfers
-	let relevant_transactions = [];
-	for(let i=0; i<transactions.length; i++){
-		let relevant_instructions = [];
-		for(let j=0; j<transactions[i].length; j++){
-			relevant_instructions.push(transactions[i][j]);
-		};
-		relevant_transactions.push({
-			signature: signatures[i],
-			instructions: relevant_instructions,
-		});
-	};
-	
-	// Output
-	let data = JSON.stringify({ 'Output':relevant_transactions }, null, 4);
+// Signer from Secret Array
+function signer_from_array(array){
+	return Keypair.fromSecretKey(array); 
+};
+
+// Public key from Base 58
+function address_from_58(string){
+	return new PublicKey(string);
+};
+
+// Public key from Array
+function address_from_array(array){
+	return new PublicKey(bs58.encode(array));
+};
+
+// Public key from Signer
+function address_from_signer(signer){
+	return address_from_58(bs58.encode(signer._keypair.publicKey)); 
+};
+
+// Write Output
+function write_to_output(object){
+	let data = JSON.stringify({ 'Output':object }, null, 4);
 	fs.writeFile("output.txt", data, (err) => {
 	  if (err)
 		console.log(err);
@@ -352,44 +262,94 @@ async function getTransactions(wallet1, wallet2){
 	});
 };
 
-getTransactions(
-	new PublicKey(bs58.encode(my_address)),
-	new PublicKey(bs58.encode(my_address_3)),
-);
+// Solana Clusters
+let MAINNET_BETA = new Connection(clusterApiUrl("mainnet-beta"), "confirmed");
+let DEVNET = new Connection(clusterApiUrl("devnet"), "confirmed");
 
-// Pambi info.
-async function pambinfo(){
-	console.log('Pambi info.:');
-	let pambi_mint = await getMint(
-		connection,
-		new PublicKey('3TdsyqMn2sCqxEFf9B8hATCrMEW1Xh2thUTs7fpr2Rur'),
+// SOL Balance
+async function balance(conn, address){
+	let lamports = await conn.getBalance(address, 'confirmed');
+	return 'Balance of: ' + address.toString() + ' (SOL): ' + (lamports/LAMPORTS_PER_SOL).toString();
+};
+
+// Token Account
+async function token_account(conn, signer, token, wallet){
+	let ata = await getOrCreateAssociatedTokenAccount(
+		conn,
+		signer,
+		token,
+		wallet,
 	);
-	//console.log(pambi_mint);
-	
-	/*// Transfer Pambi
-    let tx_transfer = await transfer(
-        connection,
-        my_keypair,
-        my_pambi_account.address,
-        my_pambi_account_3.address,
-        my_keypair,
-        10 * LAMPORTS_PER_SOL
-    );
-	console.log('Confirmation Hash:');
-	console.log(tx_transfer);
-	*/
-	//let acc_info = await connection.getAccountInfo(new PublicKey('JDFWcBDCfxpXXaF5fi4Ndxt1eRjG9cRM1xt6FmMU59yK'));
-	//console.log(acc_info);
+	return ata;
 };
 
-// Send the transaction to the Solana cluster
-async function send(){
-	console.log("Sending transaction...");
-	let txHash = await sendAndConfirmTransaction(
-	  connection,
-	  transaction,
-	  [my_keypair],
-	)
-	console.log("Transaction sent with hash:", txHash);
+// Transfer list
+async function get_transactions(conn, wallet){
+	
+	// Get all Transactions
+	let signatures = await conn.getSignaturesForAddress(
+		wallet,
+		{
+			limit: 10
+		}
+	);
+	signatures = signatures.map(sig=>sig.signature);
+	let transactions = await conn.getParsedTransactions(
+		signatures,
+		{"maxSupportedTransactionVersion": 0},
+	);
+	return transactions;
 };
-//send();
+
+// Solana Transfer
+async function sol_transfer(conn, amount, signer, wallet){
+	
+	// Void Transaction
+	let transaction = new Transaction();
+	
+	// Add Transfer Instruction
+	transaction.add(
+	  SystemProgram.transfer({
+		'fromPubkey': address_from_signer(signer),
+		'toPubkey': wallet,
+		'lamports': amount * LAMPORTS_PER_SOL,
+	  }),
+	);
+	 
+	// Send and confirm
+	let signature = await sendAndConfirmTransaction(
+		conn,
+		transaction,
+		[signer]
+	);
+	return signature;
+};
+
+// Token Transfer
+async function token_transfer(conn, token, signer, destination, amount){
+	
+	// Token accounts
+	let ata1 = await token_account(conn, signer, token, address_from_signer(signer));
+	let ata2 = await token_account(conn, signer, token, destination);
+	
+	// Transfer
+	let transfer_signature  = await transfer(
+		conn,
+		signer,
+		ata1,
+		ata2,
+		signer,
+		amount * LAMPORTS_PER_SOL,
+	);
+	return transfer_signature;
+};
+
+// Main Program
+async function main_program(){
+	let setup = await balance(
+		MAINNET_BETA,
+		MY_ADDRESS
+	);
+	console.log(setup);
+};
+main_program();
